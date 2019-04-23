@@ -73,6 +73,18 @@ class MyMatrix
             x.arr = nullptr;
             //std::cout << "\nCTOR_MOVE";
         }
+        ///////////////////////////////////////////////////////
+        MyMatrix & operator=(MyMatrix &&x)
+        {
+            Clean();
+            N = x.N;
+            M = x.M;
+            arr = x.arr;
+            x.arr = nullptr;
+            x.N = 0;
+            x.M = 0;
+            return *this;
+        }
         //////////////////////////////////////////////////////////////////
         MyMatrix CreateMatrix(const std::vector<std::vector<MT> > &x)
         {
