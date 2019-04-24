@@ -8,12 +8,9 @@
 #include "MyMatrix.h"
 using namespace std;
 
-template<typename T>
-using MapA = map<T, T, less<T>, logging_allocator<pair<const T, T>>>;
-
 int factorial(int i)
 {
-    if(i<0){cout<< "factorial error!!"; exit(0);}
+    if(i<0) throw out_of_range("factorial error!");
     else if(i==0) return 1;
     else return i*factorial(i-1);
 }
@@ -26,7 +23,7 @@ int main()
         cout << "(key = " << key <<": value = "<<value<<")\n";
     cout << "===================="<<endl;
     ///////////////////////////////Allocator map///////////////////////////////////
-    std::cout << "map alloc 48\n";
+    cout << "map alloc 48\n";
     map<int, int, less<int> > m0;
     for(size_t i=0; i<10; ++i) 
     {
@@ -54,12 +51,12 @@ int main()
         m1.get_allocator().deallocate(p, 10);
         cout << "===================="<<endl;
     // //////////////////////////////Logg_Allocator map///////////////////////////////////////
+    cout << "map with template logging_allocator 480\n";
     map<int, int, less<int>, logging_allocator<pair<const int, int>>> m2;
     
         for(size_t i=0; i<10; ++i) 
         {
             m2.insert(make_pair(i, factorial(i)));
-            cout << endl;
         }
         for(const auto & [key, value] : m2) 
             cout << "(key = " << key <<": value = "<<value<<")\n";
@@ -76,10 +73,7 @@ int main()
         {6,7,2},
         {1,0,3}
         };
-    auto p1 = allocator<int>{};
-    size_t N = 6;
-    size_t M = 6;
-    MyMatrix<int> E(N,M), E1(3,3), E2(3,3);
+    MyMatrix<int> E(6,6), E1(3,3), E2(3,3);
     MyMatrix<int> K1 = E1.CreateMatrix(matrix);
     MyMatrix<int> A1 = E1.CreateMatrix(matrix);
     MyMatrix<int> A2 = E1.CreateMatrix(matrix);
@@ -97,9 +91,9 @@ int main()
     A1 = A1 + A2;
     cout <<"====================\n A1 + A2 ="<<endl;
     A1.Show();
-    A2 = A2 + 3;
-    cout <<"====================\n A2 + 3 ="<<endl;
-    A2.Show();
+    A1 = A2 * 3;
+    cout <<"====================\n A1 * 3 ="<<endl;
+    A1.Show();
     A3 = A3 - A2;
     cout <<"====================\n A3 - A2 ="<<endl;
     A3.Show();
@@ -113,7 +107,7 @@ int main()
     C1.Show();
     cout <<"====================\n K1 ="<<endl;
     K1.Show();
-    cout <<"====================\n D1(i, 2) ="<<endl;
+    cout <<"====================\n B1^2(i, 2) ="<<endl;
     for(size_t i=0; i<3; ++i)  cout <<D1(i, 2) << "\n";
     return 0;
 }
