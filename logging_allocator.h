@@ -1,7 +1,5 @@
-#ifndef LOGGING_ALLOCATOR_H
-#define LOGGING_ALLOCATOR_H
+#pragma once
 #include <iostream>
-using namespace std;
 
 template<typename T>
 class logging_allocator 
@@ -19,25 +17,21 @@ class logging_allocator
     };
 ////////////////////////////////////////////////////
     T *allocate(size_t n) {
-        cout <<__PRETTY_FUNCTION__ << "[n = " << n << "]" << endl;
         auto p = malloc(n * sizeof(T));
         if (!p)
-            throw bad_alloc();
+            throw std::bad_alloc();
         return reinterpret_cast<T *>(p);
     }
     void deallocate(T *p, size_t n) {
-        cout << __PRETTY_FUNCTION__ <<"[n = " << n << "]" << endl;
         free(p);
     }
 
     template<typename U, typename ...Args>
     void construct(U *p, Args &&...args) {
-        cout << __PRETTY_FUNCTION__ << endl;
-        new(p) U(forward<Args>(args)...);
+        new(p) U(std::forward<Args>(args)...);
     };
 
     void destroy(T *p) {
-        cout << __PRETTY_FUNCTION__ << endl;
         p->~T();
     }
 };
@@ -51,7 +45,3 @@ bool operator!=(const logging_allocator<T1>&, const logging_allocator<T2>&) noex
 {
     return false;
 }
-
-
-
-#endif // LOGGING_ALLOCATOR_H
