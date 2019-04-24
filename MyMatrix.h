@@ -8,9 +8,9 @@ template <typename MT, typename Alloc = std::allocator<MT> >
 class MyMatrix
 {
     private:
-        MT *arr = nullptr;
-        MT *tmp = nullptr;
-        Alloc _alloc;
+        MT *arr ;
+        MT *tmp ;
+        Alloc alloc;
         unsigned N, M;
         void Clean()
             {
@@ -20,60 +20,58 @@ class MyMatrix
                     {
                         for(size_t j = 0; j<M;j++)
                         {
-                            _alloc.destroy(&arr[M*i+j]);
+                            alloc.destroy(&arr[M*i+j]);
                         }
                     }
-                _alloc.deallocate(arr, N*M);
+                alloc.deallocate(arr, N*M);
                 arr = nullptr;
                 }
-                //std::cout << "\nDTOR";
             }
     public:
         MyMatrix(unsigned n, unsigned m) : N(n), M(m)
         {
             if(N <= 0 || M <= 0) throw std::out_of_range("Matrix constructor has 0 size");
-            arr =_alloc.allocate(N*M);
+            arr =alloc.allocate(N*M);
             for(size_t i = 0; i<N;i++)
             {
                 for(size_t j = 0; j<M;j++)
                 {
-                    _alloc.construct(&arr[M*i+j], 0);
-                    if(j==i) _alloc.construct(&arr[M*i+j], 1);
+                    alloc.construct(&arr[M*i+j], 0);
+                    if(j==i) alloc.construct(&arr[M*i+j], 1);
                 }
             }
-            //std::cout << "\nCTOR_DEF";
         }
         ///////////////////////////////////////////////////////////////////////////
         MyMatrix(const MyMatrix &x):N(x.N), M(x.M)
         {
             if((N<=0 || M<=0)) throw std::out_of_range("Matrix constructor has 0 size");
-            arr =_alloc.allocate(N*M);
+            arr =alloc.allocate(N*M);
             for(size_t i = 0; i<N;i++)
             {
                 for(size_t j = 0; j<M;j++)
                 {
-                    _alloc.construct(&arr[M*i+j], x.arr[M*i+j]);
+                    alloc.construct(&arr[M*i+j], x.arr[M*i+j]);
                 }
             }
-            //std::cout << "\nCTOR_COPY";
         }
         /////============================
-        const MyMatrix &operator=(const MyMatrix &mx) {
-            if(this==&mx) return *this;
+        MyMatrix operator=(const MyMatrix &mx) const 
+        {
+            MyMatrix mresult(*this);
             for(size_t i = 0; i<N;++i){
                 for(size_t j = 0; j<M;++j){
-                    arr[M*i+j] = mx.arr[M*i+j];
+                    mresult.arr[M*i+j] = mx.arr[M*i+j];
                 }
             }
-            return *this;
+            return mresult;
         }
         ////////////////////////////////////////////////////////////////////////
         MyMatrix(MyMatrix &&x): arr(std::move(x.arr)), N(x.N), M(x.M)
         {
             x.arr = nullptr;
-            //std::cout << "\nCTOR_MOVE";
+            x.N = 0;
+            x.M = 0;
         }
-        ///////////////////////////////////////////////////////
         MyMatrix & operator=(MyMatrix &&x)
         {
             Clean();
@@ -113,103 +111,108 @@ class MyMatrix
             return arr[M*n + m];
         }
         ///////////////////////////////////////////////////////////////////////////
-        const MyMatrix &operator+(const MyMatrix &mx)
+        MyMatrix operator+(const MyMatrix &mx) const 
         {
+            MyMatrix mresult(*this);
             for(size_t i = 0; i<N;++i)
             {
                 for(size_t j = 0; j<M;++j)
                 {
-                    arr[M*i+j] += mx.arr[M*i+j];
+                    mresult.arr[M*i+j] += mx.arr[M*i+j];
                 }
             }
-            return *this;
+            return mresult;
         }
         /////////////////////////////////////////////////////////////////////////////
-        const MyMatrix &operator+(MT a)
+        MyMatrix operator+(MT a) const 
         {
+            MyMatrix mresult(*this);
             for(size_t i = 0; i<N;++i)
             {
                 for(size_t j = 0; j<M;++j)
                 {
-                    arr[M*i+j] += a;
+                    mresult.arr[M*i+j] += a;
                 }
             }
-            return *this;
+            return mresult;
         }
         /////////////////////////////////////////////////////////////////////////////////
-        const MyMatrix &operator-(const MyMatrix &mx)
+        MyMatrix operator-(const MyMatrix &mx) const
         {
+            MyMatrix mresult(*this);
             for(size_t i = 0; i<N;++i)
             {
                 for(size_t j = 0; j<M;++j)
                 {
-                    arr[M*i+j] -= mx.arr[M*i+j];
+                    mresult.arr[M*i+j] -= mx.arr[M*i+j];
                 }
             }
-            return *this;
+            return mresult;
         }
         /////////////////////////////////////////////////////////////////////////////////
-        const MyMatrix &operator*(const MyMatrix &mx)
+        MyMatrix operator*(const MyMatrix &mx)
         {
             if (M != N) throw std::out_of_range("Matrix subscript out of bounds");
-            tmp =_alloc.allocate(N*M);
+            MyMatrix mresult(*this);
+            tmp =alloc.allocate(N*M);
             for (size_t i = 0; i<N; i++)
                 for (size_t j = 0; j<M; j++)
-                    arr[M*i+j] = mx.arr[M*i+j];
+                    mresult.arr[M*i+j] = mx.arr[M*i+j];
             for (size_t i = 0; i<N; i++)
                 for (size_t j = 0; j<M; j++)
                     for (size_t k = 0; k<N; k++)
-                        tmp[M*i+j] += mx.arr[M*i+k] * arr[M*k+j];
+                        tmp[M*i+j] += mx.arr[M*i+k] * mresult.arr[M*k+j];
             for (size_t i = 0; i<N; i++)
                 for (size_t j = 0; j<M; j++)
                     { 
-                        mx.arr[M*i+j] = tmp[M*i+j];
+                        mresult.arr[M*i+j] = tmp[M*i+j];
                         tmp[M*i+j] = 0;
                     }
-            _alloc.deallocate(tmp, N*M);
+            alloc.deallocate(tmp, N*M);
             tmp = nullptr;
-            return *this;
+            return mresult;
         }
-        
         ////////////////////////////////////////////////////////////////////////////
-        const MyMatrix &operator*(MT b) 
+        MyMatrix operator*(const MT& b) const
         {
-            for (size_t i = 0; i<N; i++)
-                for (size_t j = 0; j<M; j++)
-                    arr[M*i+j] = this->arr[M*i+j];
+            MyMatrix mresult(*this);
             for(size_t i = 0; i<N;i++)
                 for(size_t j = 0; j<M;j++)
-                    arr[M*i+j]*=b;
-            return *this;
+                    mresult.arr[M*i+j]*=b;
+            return mresult;
         }
         ////////////////////////////////////////////////////////////////////////////
-        const MyMatrix &operator/(MT b) {
+        MyMatrix operator/(const MT& b) const 
+        {
+            MyMatrix mresult(*this);
             for(size_t i = 0; i<N;i++){
                 for(size_t j = 0; j<M;j++){
-                    arr[M*i+j]/=b;
+                    mresult.arr[M*i+j]/=b;
                 }
             }
-            return *this;
+            return mresult;
         }
         ///////////////////////////////////////////////////////////////////////////
         
-        const MyMatrix &operator^ (size_t P) { 
+        MyMatrix operator^ (size_t P)
+        { 
             if (M != N) throw std::out_of_range("Matrix subscript out of bounds");
-            tmp =_alloc.allocate(N*M);
+            MyMatrix mresult(*this);
+            tmp =alloc.allocate(N*M);
                 size_t m, n, k, p = 1;
                 for(size_t i = 0; i<N;i++)
                     {
                     for(size_t j = 0; j<M;j++)
                         {
-                            _alloc.construct(&tmp[M*i+j], 0);
-                            if(j==i && P == 0) _alloc.construct(&tmp[M*i+j], 1);
+                            alloc.construct(&tmp[M*i+j], 0);
+                            if(j==i && P == 0) alloc.construct(&tmp[M*i+j], 1);
                         }
                     }
             if(P == 1) 
                 {
                 for (m = 0; m<N; m++)
                     for (n = 0; n<M; n++)
-                        _alloc.construct(&tmp[M*m+n], arr[M*m+n]);
+                        alloc.construct(&tmp[M*m+n], mresult.arr[M*m+n]);
                 }
             else if(P > 1)
                 {
@@ -218,11 +221,11 @@ class MyMatrix
                     for (m = 0; m<N; m++)
                         for (n = 0; n<M; n++)
                             for (k = 0; k<N; k++)
-                                tmp[M*m+n] += this->arr[M*m+k]* arr[M*k+n];
+                                tmp[M*m+n] += mresult.arr[M*m+k]* mresult.arr[M*k+n];
                     for (m = 0; m<N; m++)
                         for (n = 0; n<M; n++) 
                         { 
-                            arr[M*m+n] = tmp[M*m+n];
+                            mresult.arr[M*m+n] = tmp[M*m+n];
                             tmp[M*m+n] = 0;
                         }
                     }
@@ -231,12 +234,12 @@ class MyMatrix
             {
                 for(size_t j = 0; j<M;j++)
                 {
-                    _alloc.destroy(&tmp[M*i+j]);
+                    alloc.destroy(&tmp[M*i+j]);
                 }
             }
-            _alloc.deallocate(tmp, N*M);
+            alloc.deallocate(tmp, N*M);
             tmp = nullptr;
-            return *this;
+            return mresult;
         }
         ///////////////////////////////////////////////////////////////////////////
         size_t SizeM()
