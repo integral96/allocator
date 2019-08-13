@@ -1,8 +1,10 @@
+
 #pragma once
 #include <iostream>
 #include <iomanip>
 #include <vector>
 #include <cmath>
+#include <string>
 
 template <typename MT, typename Alloc = std::allocator<MT> >
 class MyMatrix
@@ -14,7 +16,7 @@ class MyMatrix
         unsigned N, M;
         void Clean()
             {
-                if(arr) 
+                if(arr)
                 {
                     for(size_t i = 0; i<N;i++)
                     {
@@ -26,6 +28,7 @@ class MyMatrix
                 alloc.deallocate(arr, N*M);
                 arr = nullptr;
                 }
+                std::cout << "DESTROI" << std::endl;
             }
     public:
         MyMatrix(unsigned n, unsigned m) : N(n), M(m)
@@ -55,7 +58,7 @@ class MyMatrix
             }
         }
         /////============================
-        MyMatrix operator=(const MyMatrix &mx) const 
+        MyMatrix operator=(const MyMatrix &mx) const
         {
             MyMatrix mresult(*this);
             for(size_t i = 0; i<N;++i){
@@ -83,11 +86,21 @@ class MyMatrix
             x.M = 0;
             return *this;
         }
+        friend std::ostream & operator<<(std::ostream& os, MyMatrix &&x)
+        {
+            for(size_t i = 0; i < x.SizeN(); ++i){
+                for(size_t j = 0; j < x.SizeM(); ++j){
+                    os << std::setw(3)<<std::setprecision(4)<<x.arr[x.SizeM()*i + j]<<" ";
+                    if(j==x.SizeM()-1) os <<std::endl;
+                }
+            }
+            return os;
+        }
         //////////////////////////////////////////////////////////////////
         MyMatrix CreateMatrix(const std::vector<std::vector<MT> > &x)
         {
             N = x.size();
-            M = x.size();
+            M = x[0].size();
             if((N<=0 || M<=0)) throw std::out_of_range("Matrix constructor has 0 size");
             MyMatrix matrix(N, M);
             for(size_t i = 0; i<N;i++)
@@ -100,7 +113,7 @@ class MyMatrix
             return matrix;
         }
         //////////////////////////////////////////////////////////////////////
-        virtual ~MyMatrix() 
+        virtual ~MyMatrix()
         {
             Clean();
             N=M=0;
@@ -111,7 +124,7 @@ class MyMatrix
             return arr[M*n + m];
         }
         ///////////////////////////////////////////////////////////////////////////
-        MyMatrix operator+(const MyMatrix &mx) const 
+        MyMatrix operator+(const MyMatrix &mx) const
         {
             MyMatrix mresult(*this);
             for(size_t i = 0; i<N;++i)
@@ -124,7 +137,7 @@ class MyMatrix
             return mresult;
         }
         /////////////////////////////////////////////////////////////////////////////
-        MyMatrix operator+(MT a) const 
+        MyMatrix operator+(MT a) const
         {
             MyMatrix mresult(*this);
             for(size_t i = 0; i<N;++i)
@@ -164,7 +177,7 @@ class MyMatrix
                         tmp[M*i+j] += mx.arr[M*i+k] * mresult.arr[M*k+j];
             for (size_t i = 0; i<N; i++)
                 for (size_t j = 0; j<M; j++)
-                    { 
+                    {
                         mresult.arr[M*i+j] = tmp[M*i+j];
                         tmp[M*i+j] = 0;
                     }
@@ -182,7 +195,7 @@ class MyMatrix
             return mresult;
         }
         ////////////////////////////////////////////////////////////////////////////
-        MyMatrix operator/(const MT& b) const 
+        MyMatrix operator/(const MT& b) const
         {
             MyMatrix mresult(*this);
             for(size_t i = 0; i<N;i++){
@@ -193,9 +206,9 @@ class MyMatrix
             return mresult;
         }
         ///////////////////////////////////////////////////////////////////////////
-        
+
         MyMatrix operator^ (size_t P)
-        { 
+        {
             if (M != N) throw std::out_of_range("Matrix subscript out of bounds");
             MyMatrix mresult(*this);
             tmp =alloc.allocate(N*M);
@@ -208,7 +221,7 @@ class MyMatrix
                             if(j==i && P == 0) alloc.construct(&tmp[M*i+j], 1);
                         }
                     }
-            if(P == 1) 
+            if(P == 1)
                 {
                 for (m = 0; m<N; m++)
                     for (n = 0; n<M; n++)
@@ -216,15 +229,15 @@ class MyMatrix
                 }
             else if(P > 1)
                 {
-                while (p++ < P) 
+                while (p++ < P)
                     {
                     for (m = 0; m<N; m++)
                         for (n = 0; n<M; n++)
                             for (k = 0; k<N; k++)
                                 tmp[M*m+n] += mresult.arr[M*m+k]* mresult.arr[M*k+n];
                     for (m = 0; m<N; m++)
-                        for (n = 0; n<M; n++) 
-                        { 
+                        for (n = 0; n<M; n++)
+                        {
                             mresult.arr[M*m+n] = tmp[M*m+n];
                             tmp[M*m+n] = 0;
                         }
@@ -242,10 +255,15 @@ class MyMatrix
             return mresult;
         }
         ///////////////////////////////////////////////////////////////////////////
-        size_t SizeM()
+        size_t SizeN()
         {
             return N;
         }
+        size_t SizeM()
+        {
+            return M;
+        }
+        std::string health() {return std::string("GOOD");}
         void Show()
         {
             for(size_t i = 0; i<N;++i){
@@ -259,4 +277,3 @@ class MyMatrix
 
 
 };
-
